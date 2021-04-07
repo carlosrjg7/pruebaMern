@@ -1,0 +1,61 @@
+version: '3.7'
+
+services: 
+    frontend:
+        build: 
+            context: ./client
+            dockerfile: Dockerfile
+        stdin_open: true
+        ports: 
+            - "3000:3000"
+        volumes: 
+            - "./client:/app/frontend"
+            - "/app/frontend/node_modules"
+        depends_on:
+            - backend
+        networks: 
+            - app
+        links: 
+            - backend
+    
+    backend:
+        build: 
+            context: ./server
+            dockerfile: Dockerfile
+        networks: 
+            - app
+        environment:
+            - DB_HOST=db
+            - DB_NAME=${MYSQL_DATABASE}
+            - DB_USER=${MYSQL_ROOT_USERNAME}
+            - DB_PASSWORD=${MYSQL_ROOT_PASSWORD}
+            - DB_DATABASE=${DB_DATABASE}
+            - DB_USERNAME=${DB_USERNAME}
+            - DB_READ_HOST=${DB_READ_HOST}
+            - DB_WRITE_HOST=${DB_WRITE_HOST}
+            - DB_PORT=${DB_PORT}
+        ports: 
+            - "9000:9000"
+        volumes: 
+            - "./server:/app/backend"
+            - "/app/backend/node_modules"
+        depends_on:
+            - db
+
+    db:
+        image: mysql:5.7
+        restart: always
+        volumes:
+            - "./db:/var/lib/mysql"
+        ports: 
+            - "3306:3306"
+        environment:
+            - MYSQL_ROOT_PASSWORD
+            - MYSQL_DATABASE
+            - MYSQL_ROOT_USERNAME
+        networks: 
+            - app
+
+networks:
+    app:
+        driver: bridge
